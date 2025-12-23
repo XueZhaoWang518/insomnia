@@ -57,6 +57,15 @@ async function echoHandler(req: any, res: any) {
 app.get('/echo', rawParser, echoHandler);
 app.post('/echo', rawParser, echoHandler);
 
+app.post('/validate-request', express.json(), (req, res) => {
+  if (!req.body?.name) {
+    res.status(400).json({ error: 'Missing field: name' });
+    return;
+  }
+
+  res.status(200).json({ ok: true });
+});
+
 app.get('/sleep', (_req, res) => {
   res.status(200).send({ sleep: true });
 });
