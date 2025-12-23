@@ -28,3 +28,7 @@ export function getUrlEditor(page: Page) {
 export function getVisibleCodeEditorTextbox(page: Page) {
   return getRequestPane(page).locator('[data-testid="CodeEditor"]:visible').getByRole('textbox');
 }
+
+export function getVisibleCodeEditorContainer(page: Page) {
+  return getRequestPane(page).locator('[data-testid="CodeEditor"]:visible');
+}
