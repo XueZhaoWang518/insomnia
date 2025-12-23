@@ -12,33 +12,7 @@ jobs:
     timeout-minutes: 40
     runs-on: ubuntu-22.04
     steps:
-      - name: Checkout branch
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - name: Run main workflow tests
+        uses: ./.github/actions/test-main-workflow
         with:
-          node-version-file: .nvmrc
-          cache: npm
-          cache-dependency-path: package-lock.json
-          registry-url: 'https://npm.pkg.github.com'
-          scope: '@kong'
-
-      - name: Install packages
-        run: npm ci
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build app for smoke tests
-        run: NODE_OPTIONS='--max_old_space_size=6144' npm run app-build
-
-      - name: Run main workflow test
-        run: npm run test:build -w packages/insomnia-smoke-test -- --project=Main
-
-      - name: Upload main test traces
-        uses: actions/upload-artifact@v4
-        if: ${{ !cancelled() }}
-        with:
-          if-no-files-found: ignore
-          name: ubuntu-main-workflow-traces-${{ github.run_number }}
-          path: packages/insomnia-smoke-test/traces
+          node-auth-token: ${{ secrets.GITHUB_TOKEN }}
