@@ -1,6 +1,13 @@
 import type { PlaywrightTestConfig } from '@playwright/test';
+import { test } from './playwright/test';
 const config: PlaywrightTestConfig = {
   projects: [
+    {
+      name: 'Main',
+      testMatch: /main-workflow\/.*.test.ts/,
+      retries: 0,
+
+    },
     {
       // High-confidence smoke/sanity checks, runs on Test App only on Ubuntu
       name: 'Smoke',
