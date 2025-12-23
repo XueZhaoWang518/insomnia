@@ -1,7 +1,15 @@
 name: Main Workflow Test
 
 on:
+  merge_group:
   workflow_dispatch:
+  push:
+    branches:
+      - main-workflow-smoke 
+  pull_request:
+    types:
+      - opened
+      - synchronize
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
