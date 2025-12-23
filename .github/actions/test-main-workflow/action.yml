@@ -1,0 +1,56 @@
+name: Run Main Workflow Tests
+description: "Checkout, install, build, and run the main workflow smoke tests"
+
+inputs:
+  node-auth-token:
+    description: "Token used for installing private npm packages"
+    required: true
+  project:
+    description: "Playwright project name to run"
+    required: false
+    default: Main
+  upload-traces:
+    description: "Whether to upload Playwright traces"
+    required: false
+    default: "true"
+  node-version-file:
+    description: "Path to the Node.js version file"
+    required: false
+    default: .nvmrc
+
+runs:
+  using: composite
+  steps:
+    - name: Checkout branch
+      uses: actions/checkout@v4
+
+    - name: Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version-file: ${{ inputs.node-version-file }}
+        cache: npm
+        cache-dependency-path: package-lock.json
+        registry-url: "https://npm.pkg.github.com"
+        scope: "@kong"
+
+    - name: Install packages
+      run: npm ci
+      shell: bash
+      env:
+        NODE_AUTH_TOKEN: ${{ inputs.node-auth-token }}
+
+    - name: Build app for smoke tests
+      run: NODE_OPTIONS='--max_old_space_size=6144' npm run app-build
+      shell: bash
+
+    - name: Run main workflow test
+      run: npm run test:build -w packages/insomnia-smoke-test -- --project=${{ inputs.project }}
+      shell: bash
+
+    - name: Upload main test traces
+      uses: actions/upload-artifact@v4
+      if: ${{ inputs.upload-traces == 'true' && !cancelled() }}
+      with:
+        if-no-files-found: ignore
+        name: ubuntu-main-workflow-traces-${{ github.run_number }}
+        path: packages/insomnia-smoke-test/traces
