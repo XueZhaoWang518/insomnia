@@ -37,10 +37,12 @@ jobs:
           scope: '@kong'
 
       - name: Install packages
-        run: npm ci
+        run: npm ci --ignore-scripts
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_ACTIONS: 'false'
+
+      - name: Apply patches
+        run: npx patch-package
 
       - name: Build app for smoke tests
         run: NODE_OPTIONS='--max_old_space_size=6144' npm run app-build
