@@ -1,5 +1,12 @@
 import { expect, type Page } from '@playwright/test';
-import { getRequestPane, getResponsePane, getVisibleCodeEditorContainer, REQUEST_CONFIG } from './request-helpers';
+import {
+  getRequestPane,
+  getResponsePane,
+  getUrlEditor,
+  getUrlEditorTextbox,
+  getVisibleCodeEditorContainer,
+  REQUEST_CONFIG,
+} from './request-helpers';
 
 export async function assertMainWorkflowParams(page: Page) {
   const paramsList = getRequestPane(page).getByRole('listbox', { name: 'Key-value pairs' });
@@ -25,7 +32,9 @@ export async function assertMainWorkflowMethod(page: Page) {
 }
 
 export async function assertMainWorkflowUrl(page: Page, requestUrl: string) {
-  await expect(getRequestPane(page).locator('header').getByTestId('OneLineEditor').first()).toContainText(requestUrl);
+  const urlContainer = getUrlEditor(page);
+  const urlTextbox = getUrlEditorTextbox(page);
+  await expect(urlContainer).toContainText(requestUrl);
 }
 
 export async function assertMainWorkflowResponse(page: Page) {
@@ -51,5 +60,5 @@ export async function assertBadRequestError(page: Page, message: string) {
 
 export async function assertServerUnavailableError(page: Page) {
   const responsePane = getResponsePane(page);
-  await expect(responsePane).toContainText(/ECONNREFUSED|Failed to connect|Connection refused|Failed to fetch/i);
+  await expect(responsePane).toContainText('URL using bad/illegal format or missing URL');
 }

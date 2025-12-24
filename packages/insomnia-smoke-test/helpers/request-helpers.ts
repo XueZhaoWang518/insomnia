@@ -22,11 +22,11 @@ export function getResponsePane(page: Page) {
 }
 
 export function getUrlEditor(page: Page) {
-  return getRequestPane(page)
-    .locator('header')
-    .locator('[data-testid="OneLineEditor"]')
-    .getByRole('textbox')
-    .first();
+  return getRequestPane(page).locator('header').locator('[data-testid="OneLineEditor"]').first();
+}
+
+export function getUrlEditorTextbox(page: Page) {
+  return getUrlEditor(page).getByRole('textbox');
 }
 
 export function getVisibleCodeEditorTextbox(page: Page) {

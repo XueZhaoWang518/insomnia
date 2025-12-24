@@ -40,8 +40,11 @@ export async function selectActiveRequest(page: Page) {
 
 export async function setRequestUrl(page: Page, url: string) {
   const urlEditor = getUrlEditor(page);
-  await urlEditor.fill(url);
+  await urlEditor.click({ force: true });
+  await page.keyboard.press('ControlOrMeta+A');
+  await page.keyboard.type(url, { delay: 10 });
   await page.keyboard.press('Enter');
+  await page.keyboard.press('Tab');
 }
 
 export async function setPostMethod(page: Page) {
