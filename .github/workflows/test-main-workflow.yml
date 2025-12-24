@@ -18,7 +18,11 @@ concurrency:
 jobs:
   Test:
     timeout-minutes: 40
-    runs-on: ubuntu-22.04
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, macos-latest, windows-latest]
     steps:
       - name: Checkout branch
         uses: actions/checkout@v4
@@ -46,7 +50,7 @@ jobs:
         if: ${{ !cancelled() }}
         with:
           if-no-files-found: ignore
-          name: ubuntu-main-workflow-traces-${{ github.run_number }}
+          name: ${{ matrix.os }}-main-workflow-traces-${{ github.run_number }}
           path: packages/insomnia-smoke-test/traces
 
       - name: Upload main test report
@@ -54,5 +58,5 @@ jobs:
         if: ${{ !cancelled() }}
         with:
           if-no-files-found: ignore
-          name: ubuntu-main-workflow-report-${{ github.run_number }}
+          name: ${{ matrix.os }}-main-workflow-report-${{ github.run_number }}
           path: packages/insomnia-smoke-test/playwright-report
