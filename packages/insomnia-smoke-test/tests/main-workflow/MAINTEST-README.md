@@ -61,7 +61,15 @@ npm run test:dev -w insomnia-smoke-test -- tests/main-workflow/main.test.ts
 - The test uses the standard smoke-test web server from `packages/insomnia-smoke-test/server`.
 - It avoids relying on `data-testid="project"` because the entry page can vary.
 - The URL field is a CodeMirror editor; the test uses keyboard input to avoid click interception issues.
- - The `test:dev` script relies on `xvfb-maybe` (installed via npm).
+- The `test:dev` script relies on `xvfb-maybe` (installed via npm).
+
+## View Report
+
+After running Playwright, view the HTML report with:
+
+```sh
+npx playwright show-report packages/insomnia-smoke-test/playwright-report
+```
 
 ## Troubleshooting
 

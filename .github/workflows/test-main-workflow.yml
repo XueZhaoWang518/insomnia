@@ -48,3 +48,11 @@ jobs:
           if-no-files-found: ignore
           name: ubuntu-main-workflow-traces-${{ github.run_number }}
           path: packages/insomnia-smoke-test/traces
+
+      - name: Upload main test report
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          if-no-files-found: ignore
+          name: ubuntu-main-workflow-report-${{ github.run_number }}
+          path: packages/insomnia-smoke-test/playwright-report
