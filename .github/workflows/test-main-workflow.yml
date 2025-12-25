@@ -53,6 +53,7 @@ jobs:
 
       - name: Install node-libcurl Electron bindings
         run: npm run install-libcurl-electron
+        shell: bash
         env:
           target: 38.4.0
 
