@@ -26,7 +26,7 @@ export function getUrlEditor(page: Page) {
 }
 
 export function getUrlEditorTextbox(page: Page) {
-  return getUrlEditor(page).getByRole('textbox');
+  return getUrlEditor(page).getByRole('textbox').first();
 }
 
 export function getVisibleCodeEditorTextbox(page: Page) {

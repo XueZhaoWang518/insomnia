@@ -40,6 +40,7 @@ export async function selectActiveRequest(page: Page) {
 
 export async function setRequestUrl(page: Page, url: string) {
   const urlEditor = getUrlEditor(page);
+  await urlEditor.waitFor({ state: 'visible', timeout: 10_000 });
   await urlEditor.click({ force: true });
   await page.keyboard.press('ControlOrMeta+A');
   await page.keyboard.type(url, { delay: 10 });

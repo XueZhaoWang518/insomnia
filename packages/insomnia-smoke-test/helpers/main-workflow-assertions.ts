@@ -1,12 +1,5 @@
 import { expect, type Page } from '@playwright/test';
-import {
-  getRequestPane,
-  getResponsePane,
-  getUrlEditor,
-  getUrlEditorTextbox,
-  getVisibleCodeEditorContainer,
-  REQUEST_CONFIG,
-} from './request-helpers';
+import { getRequestPane, getResponsePane, getUrlEditor, getVisibleCodeEditorContainer, REQUEST_CONFIG } from './request-helpers';
 
 export async function assertMainWorkflowParams(page: Page) {
   const paramsList = getRequestPane(page).getByRole('listbox', { name: 'Key-value pairs' });
@@ -33,7 +26,6 @@ export async function assertMainWorkflowMethod(page: Page) {
 
 export async function assertMainWorkflowUrl(page: Page, requestUrl: string) {
   const urlContainer = getUrlEditor(page);
-  const urlTextbox = getUrlEditorTextbox(page);
   await expect(urlContainer).toContainText(requestUrl);
 }
 
