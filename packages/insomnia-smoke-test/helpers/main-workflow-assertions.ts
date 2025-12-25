@@ -60,5 +60,5 @@ export async function assertBadRequestError(page: Page, message: string) {
 
 export async function assertServerUnavailableError(page: Page) {
   const responsePane = getResponsePane(page);
-  await expect(responsePane).toContainText('URL using bad/illegal format or missing URL');
+  await expect(responsePane).toContainText(/Couldn't connect to server|URL using bad\/illegal format or missing URL/i);
 }

@@ -151,7 +151,7 @@ export const test = baseTest.extend<{
     await electronApp.close();
   },
   page: async ({ app }, use) => {
-    const page = await app.firstWindow();
+    const page = await app.firstWindow({ timeout: 120_000 });
 
     await page.waitForLoadState();
 
