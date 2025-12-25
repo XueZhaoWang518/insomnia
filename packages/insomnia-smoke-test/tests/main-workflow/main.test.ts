@@ -14,7 +14,10 @@ import {
 import {
   createHttpRequest,
   createRequestCollection,
+  importCollectionFromFile,
   selectActiveRequest,
+  selectImportedRequest,
+  sendRequestAndAssertSuccess,
   sendRequest,
   setJsonBody,
   setPostMethod,
@@ -61,8 +64,7 @@ test.describe('main workflow', () => {
     });
 
     await test.step('Send request and validate response', async () => {
-      await sendRequest(page);
-      await assertMainWorkflowResponse(page);
+      await sendRequestAndAssertSuccess(page, assertMainWorkflowResponse);
     });
   });
 
@@ -100,8 +102,9 @@ test.describe('main workflow', () => {
     });
 
     await test.step('Send request and validate error response', async () => {
-      await sendRequest(page);
-      await assertBadRequestError(page, 'Missing field: name');
+      await sendRequestAndAssertSuccess(page, async currentPage => {
+        await assertBadRequestError(currentPage, 'Missing field: name');
+      });
     });
   });
 
@@ -126,8 +129,28 @@ test.describe('main workflow', () => {
     });
 
     await test.step('Send request and validate error response', async () => {
-      await sendRequest(page);
-      await assertServerUnavailableError(page);
+      await sendRequestAndAssertSuccess(page, assertServerUnavailableError);
+    });
+  });
+
+  test('import -> select -> send -> validate response', async ({ app, page }) => {
+    test.slow(process.platform === 'darwin' || process.platform === 'win32', 'Slow app start on these platforms');
+    const statusTag = page.locator('[data-testid="response-status-tag"]:visible');
+    const responsePane = page.getByTestId('response-pane');
+
+    await test.step('Import request collection from file', async () => {
+      await importCollectionFromFile(page, 'smoke-test-collection.yaml');
+    });
+
+    await test.step('Select imported request', async () => {
+      await selectImportedRequest(page, 'Smoke tests', 'send JSON request');
+    });
+
+    await test.step('Send request and validate response', async () => {
+      await sendRequestAndAssertSuccess(page, async currentPage => {
+        await expect(statusTag).toContainText('200 OK');
+        await expect(responsePane).toContainText('"id": "1"');
+      });
     });
   });
 });

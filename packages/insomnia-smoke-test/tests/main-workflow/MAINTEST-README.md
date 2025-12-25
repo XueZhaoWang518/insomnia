@@ -71,6 +71,14 @@ After running Playwright, view the HTML report with:
 npx playwright show-report packages/insomnia-smoke-test/playwright-report
 ```
 
+## Windows Notes
+
+On Windows, prefer running Playwright directly to avoid Linux-only helpers:
+
+```sh
+npx playwright test -c packages/insomnia-smoke-test/playwright.config.ts --project "Main"
+```
+
 ## Troubleshooting
 
 - If the app opens to a black screen, ensure `npm run watch:app` is running and that `entry.renderer.min.js` exists.
