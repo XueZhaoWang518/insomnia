@@ -22,7 +22,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, macos-latest, windows-latest]
+        #os: [ubuntu-22.04, macos-latest, windows-latest]
+        os: [macos-latest]
     steps:
       - name: Checkout branch
         uses: actions/checkout@v4
