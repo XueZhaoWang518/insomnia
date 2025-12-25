@@ -53,7 +53,10 @@ jobs:
 
       - name: Install node-libcurl Electron bindings (Windows)
         if: runner.os == 'Windows'
-        run: .\node_modules\.bin\node-pre-gyp.cmd install --directory node_modules\@getinsomnia\node-libcurl --update-binary --runtime=electron --target=38.4.0
+        run: .\node_modules\.bin\node-pre-gyp.cmd install --directory node_modules\@getinsomnia\node-libcurl --update-binary --runtime=electron --target=38.4.0 --fallback-to-build
+        env:
+          npm_config_build_from_source: true
+          npm_config_msvs_version: 2022
 
       - name: Install node-libcurl Electron bindings (Non-Windows)
         if: runner.os != 'Windows'
