@@ -44,8 +44,17 @@ jobs:
       - name: Apply patches
         run: npx patch-package
 
+      - name: Install libcurl build deps (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libcurl4-openssl-dev
+
       - name: Install Electron binary
         run: node node_modules/electron/install.js
+
+      - name: Install node-libcurl Electron bindings
+        run: npm run install-libcurl-electron
+        env:
+          target: 38.4.0
 
       - name: Build app for smoke tests
         run: NODE_OPTIONS='--max_old_space_size=6144' npm run app-build
