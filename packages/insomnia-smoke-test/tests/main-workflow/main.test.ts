@@ -17,6 +17,7 @@ import {
   importCollectionFromFile,
   selectActiveRequest,
   selectImportedRequest,
+  scanCollectionFromFile,
   sendRequestAndAssertSuccess,
   sendRequest,
   setJsonBody,
@@ -151,6 +152,18 @@ test.describe('main workflow', () => {
         await expect(statusTag).toContainText('200 OK');
         await expect(responsePane).toContainText('"id": "1"');
       });
+    });
+  });
+
+  test('import shows parse error for invalid file', async ({ page }) => {
+    await test.step('Scan invalid import file', async () => {
+      await scanCollectionFromFile(page, 'invalid-import.yaml');
+    });
+
+    await test.step('Verify parse error is shown', async () => {
+      const dialog = page.getByRole('dialog');
+      await expect(dialog).toContainText('Parse file invalid-import.yaml failed');
+      await expect(dialog.getByRole('listitem').first()).toBeVisible();
     });
   });
 });

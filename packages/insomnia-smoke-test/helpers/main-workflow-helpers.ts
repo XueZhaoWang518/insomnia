@@ -109,6 +109,14 @@ export async function importCollectionFromFile(page: Page, fixtureName: string) 
   await page.getByRole('dialog').getByRole('button', { name: 'Import' }).click();
 }
 
+export async function scanCollectionFromFile(page: Page, fixtureName: string) {
+  const fixturePath = getFixturePath(fixtureName);
+  await page.getByLabel('Import').click();
+  await page.locator('[data-test-id="import-from-file"]').click();
+  await page.setInputFiles('[data-test-id="import-file-input"]', fixturePath);
+  await page.getByRole('button', { name: 'Scan' }).click();
+}
+
 export async function selectImportedRequest(page: Page, collectionName: string, requestName: string) {
   await page.getByLabel(collectionName).click();
   await page.getByLabel('Request Collection').getByTestId(requestName).press('Enter');
