@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
 import { getFixturePath } from '../playwright/paths';
 import { getRequestPane, getUrlEditor, getVisibleCodeEditorTextbox, REQUEST_CONFIG } from './request-helpers';
 
@@ -29,24 +29,36 @@ export async function createHttpRequest(page: Page) {
 }
 
 export async function selectActiveRequest(page: Page) {
-  const newRequest = page.getByTestId('New Request');
-  if (await newRequest.count()) {
-    await newRequest.click();
+  const tabsGrid = page.getByRole('grid', { name: 'Insomnia Tabs' });
+  if (await tabsGrid.count()) {
+    const newRequestTab = tabsGrid.getByRole('row', { name: /tab-new request/i }).first();
+    if (await newRequestTab.count()) {
+      await newRequestTab.click();
+      await expect(newRequestTab).toHaveAttribute('aria-selected', 'true');
+      return;
+    }
+  }
+
+  const requestGrid = page.getByRole('grid', { name: 'Request Collection' });
+  await requestGrid.waitFor({ state: 'visible', timeout: 10_000 });
+
+  const newRequestRow = requestGrid.getByRole('row', { name: /new request/i }).first();
+  if (await newRequestRow.count()) {
+    await newRequestRow.click();
     return;
   }
 
-  const fallbackRequest = page.getByRole('grid', { name: 'Request Collection' }).getByRole('row').first();
+  const fallbackRequest = requestGrid.getByRole('row').last();
   await fallbackRequest.click();
 }
 
 export async function setRequestUrl(page: Page, url: string) {
   const urlEditor = getUrlEditor(page);
   await urlEditor.waitFor({ state: 'visible', timeout: 10_000 });
-  await urlEditor.click({ force: true });
-  await page.keyboard.press('ControlOrMeta+A');
-  await page.keyboard.type(url, { delay: 10 });
+  const urlTextbox = urlEditor.getByRole('textbox').first();
+  await urlTextbox.click({ force: true });
+  await urlTextbox.fill(url);
   await page.keyboard.press('Enter');
-  await page.keyboard.press('Tab');
 }
 
 export async function setPostMethod(page: Page) {
@@ -97,12 +109,81 @@ export async function setJsonBody(page: Page, body: string) {
 }
 
 export async function sendRequest(page: Page) {
-  await getRequestPane(page).getByRole('button', { name: 'Send' }).click();
+  const sendButton = getRequestPane(page).getByRole('button', { name: 'Send' });
+  await expect(sendButton).toBeVisible;
+  await expect(sendButton).toBeEnabled;
+  await sendButton.click();
+}
+
+export async function setEnvironmentVariables(page: Page, entries: Array<{ key: string; value: string }>) {
+  await page.getByRole('button', { name: 'Manage Environments' }).click();
+  const manageCollectionButton = page.getByRole('button', { name: 'Manage collection environments' });
+  if (await manageCollectionButton.count()) {
+    await manageCollectionButton.click();
+  }
+
+  const dialog = page
+    .getByRole('dialog', { name: 'Manage Environments' })
+    .filter({ has: page.getByRole('button', { name: 'Add Row' }) })
+    .first();
+  await dialog.waitFor({ state: 'visible', timeout: 10_000 });
+
+  const baseEnvRow = dialog.getByRole('row', { name: /base environment/i });
+  if (await baseEnvRow.count()) {
+    await baseEnvRow.click();
+  }
+
+  const dialogTable = dialog.getByRole('listbox', { name: 'Environment Key Value Pair' });
+  if (!(await dialogTable.count())) {
+    const tableViewToggle = dialog.getByRole('button', { name: /table view/i });
+    if (await tableViewToggle.count()) {
+      await tableViewToggle.click();
+    }
+  }
+
+  const kvTable = dialog.getByRole('listbox', { name: 'Environment Key Value Pair' });
+  await kvTable.waitFor({ state: 'visible', timeout: 10_000 });
+
+  const addRowButton = dialog.getByRole('button', { name: 'Add Row' });
+  let existingRows = await kvTable.getByRole('option').count();
+  while (existingRows < entries.length && (await addRowButton.count())) {
+    await addRowButton.click({ delay: 200 });
+    existingRows = await kvTable.getByRole('option').count();
+  }
+  await expect
+    .poll(async () => kvTable.getByRole('option').count(), { timeout: 10_000 })
+    .toBeGreaterThanOrEqual(entries.length);
+
+  for (let i = 0; i < entries.length; i += 1) {
+    const row = kvTable.getByRole('option').nth(i);
+    const keyEditor = row.getByTestId('OneLineEditor').first();
+    const valueEditor = row.getByTestId('OneLineEditor').nth(1);
+    await keyEditor.click();
+    await page.keyboard.press('ControlOrMeta+A');
+    await page.keyboard.type(entries[i].key);
+
+    await valueEditor.click({ delay: 200 });
+    await page.keyboard.press('ControlOrMeta+A');
+    await page.keyboard.type(entries[i].value);
+  }
+
+  await dialog.getByRole('button', { name: 'Close', exact: true }).click();
+}
+
+export async function importConfigurationFromFile(page: Page, fixtureName: string) {
+  const fixturePath = getFixturePath(fixtureName);
+  await page.getByTestId('workspace-context-dropdown').click();
+  await page.getByText('From File').click();
+  await page.locator('[data-test-id="import-from-file"]').click();
+  await page.setInputFiles('[data-test-id="import-file-input"]', fixturePath);
+  await page.getByRole('button', { name: 'Scan' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Import' }).click();
 }
 
 export async function importCollectionFromFile(page: Page, fixtureName: string) {
   const fixturePath = getFixturePath(fixtureName);
-  await page.getByLabel('Import').click();
+  const importButton = page.getByRole('button', { name: 'Import' });
+  await importButton.click();
   await page.locator('[data-test-id="import-from-file"]').click();
   await page.setInputFiles('[data-test-id="import-file-input"]', fixturePath);
   await page.getByRole('button', { name: 'Scan' }).click();

@@ -6,6 +6,11 @@ export const REQUEST_CONFIG = {
     contentType: 'application/json',
     requestId: 'req-456',
   },
+  env: {
+    baseUrlKey: 'base_url',
+    authUserKey: 'auth_user',
+    authPassKey: 'auth_pass',
+  },
   body: {
     userId: 'user-123',
     token: 'wxz-token',

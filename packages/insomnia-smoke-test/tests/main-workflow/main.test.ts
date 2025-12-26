@@ -1,31 +1,31 @@
 import { expect } from '@playwright/test';
 import { test } from '../../playwright/test';
-import { REQUEST_CONFIG, getRequestPane, getVisibleCodeEditorTextbox } from '../../helpers/request-helpers';
+import { REQUEST_CONFIG, getRequestPane } from '../../helpers/request-helpers';
 import {
   assertMainWorkflowBody,
   assertMainWorkflowHeaders,
   assertMainWorkflowMethod,
   assertMainWorkflowParams,
-  assertMainWorkflowResponse,
   assertMainWorkflowUrl,
   assertBadRequestError,
+  assertMainWorkflowResponse,
   assertServerUnavailableError,
 } from '../../helpers/main-workflow-assertions';
 import {
   createHttpRequest,
   createRequestCollection,
+  importConfigurationFromFile,
   importCollectionFromFile,
   selectActiveRequest,
   selectImportedRequest,
   scanCollectionFromFile,
   sendRequestAndAssertSuccess,
-  sendRequest,
   setJsonBody,
   setPostMethod,
   setQueryParams,
+  setRequestUrl,
   setRequestBody,
   setRequestHeaders,
-  setRequestUrl,
 } from '../../helpers/main-workflow-helpers';
 
 test.describe('main workflow', () => {
@@ -65,7 +65,9 @@ test.describe('main workflow', () => {
     });
 
     await test.step('Send request and validate response', async () => {
-      await sendRequestAndAssertSuccess(page, assertMainWorkflowResponse);
+      await sendRequestAndAssertSuccess(page, async curentPage =>{
+        await assertMainWorkflowResponse(curentPage);
+      });
     });
   });
 
@@ -91,9 +93,7 @@ test.describe('main workflow', () => {
       await setRequestHeaders(page);
       await assertMainWorkflowHeaders(page);
 
-      await setJsonBody(page, `{
-  "token": "${REQUEST_CONFIG.body.token}"
-}`);
+      await setJsonBody(page, `{"token": "${REQUEST_CONFIG.body.token}"}`);
     });
 
     await test.step('Set request URL', async () => {
@@ -105,6 +105,29 @@ test.describe('main workflow', () => {
     await test.step('Send request and validate error response', async () => {
       await sendRequestAndAssertSuccess(page, async currentPage => {
         await assertBadRequestError(currentPage, 'Missing field: name');
+      });
+    });
+  });
+
+  test('basic auth via imported fixture request', async ({ page }) => {
+    test.slow(process.platform === 'darwin' || process.platform === 'win32', 'Slow app start on these platforms');
+
+    await test.step('Create a request collection', async () => {
+      await createRequestCollection(page);
+      await expect(page.getByRole('grid', { name: 'Request Collection' })).toBeVisible();
+    });
+
+    await test.step('Import fixture collection and select request', async () => {
+      await importConfigurationFromFile(page, 'smoke-test-collection.yaml');
+      await page.getByLabel('Request Collection').getByTestId('sends request with basic authentication').press('Enter');
+      await expect(getRequestPane(page).getByRole('button', { name: 'Send' })).toBeVisible();
+    });
+
+    await test.step('Send request and validate response', async () => {
+      await sendRequestAndAssertSuccess(page, async currentPage => {
+        const statusTag = currentPage.locator('[data-testid="response-status-tag"]:visible');
+        await expect(statusTag).toContainText('200 OK');
+        await expect(currentPage.getByTestId('response-pane')).toContainText('basic auth received');
       });
     });
   });
@@ -166,4 +189,4 @@ test.describe('main workflow', () => {
       await expect(dialog.getByRole('listitem').first()).toBeVisible();
     });
   });
-});
+ });
