@@ -20,17 +20,20 @@ import {
   selectImportedRequest,
   scanCollectionFromFile,
   sendRequestAndAssertSuccess,
+  slowOnDarwinAndWindows,
   setJsonBody,
   setPostMethod,
   setQueryParams,
   setRequestUrl,
   setRequestBody,
   setRequestHeaders,
+  sendRequest,
 } from '../../helpers/main-workflow-helpers';
+import { send } from 'process';
 
 test.describe('main workflow', () => {
   test('create -> configure -> send -> validate response', async ({ page }) => {
-    test.slow(process.platform === 'darwin' || process.platform === 'win32', 'Slow app start on these platforms');
+    slowOnDarwinAndWindows(test);
     const baseUrl = test.info().config.webServer?.url ?? 'http://127.0.0.1:4010';
 
     await test.step('Create a request collection', async () => {
@@ -66,13 +69,14 @@ test.describe('main workflow', () => {
 
     await test.step('Send request and validate response', async () => {
       await sendRequestAndAssertSuccess(page, async curentPage =>{
+        await sendRequest(curentPage);
         await assertMainWorkflowResponse(curentPage);
       });
     });
   });
 
   test('shows bad request error when required body field is missing', async ({ page }) => {
-    test.slow(process.platform === 'darwin' || process.platform === 'win32', 'Slow app start on these platforms');
+    slowOnDarwinAndWindows(test);
     const baseUrl = test.info().config.webServer?.url ?? 'http://127.0.0.1:4010';
 
     await test.step('Create a request collection', async () => {
@@ -104,13 +108,23 @@ test.describe('main workflow', () => {
 
     await test.step('Send request and validate error response', async () => {
       await sendRequestAndAssertSuccess(page, async currentPage => {
+        await sendRequest(currentPage);
         await assertBadRequestError(currentPage, 'Missing field: name');
+      });
+    });
+
+    await test.step('Fix body and validate success response', async () => {
+      await setJsonBody(page, `{"name": "wxz-main", "token": "${REQUEST_CONFIG.body.token}"}`);
+      await sendRequestAndAssertSuccess(page, async currentPage => {
+        await sendRequest(currentPage);
+        const statusTag = currentPage.locator('[data-testid="response-status-tag"]:visible');
+        await expect(statusTag).toContainText('200 OK');
       });
     });
   });
 
   test('basic auth via imported fixture request', async ({ page }) => {
-    test.slow(process.platform === 'darwin' || process.platform === 'win32', 'Slow app start on these platforms');
+    slowOnDarwinAndWindows(test);
 
     await test.step('Create a request collection', async () => {
       await createRequestCollection(page);
@@ -133,7 +147,7 @@ test.describe('main workflow', () => {
   });
 
   test('shows error when server is unavailable', async ({ page }) => {
-    test.slow(process.platform === 'darwin' || process.platform === 'win32', 'Slow app start on these platforms');
+    slowOnDarwinAndWindows(test);
     const unavailableUrl = 'http://127.0.0.1:59999/unavailable';
 
     await test.step('Create a request collection', async () => {
@@ -158,7 +172,7 @@ test.describe('main workflow', () => {
   });
 
   test('import -> select -> send -> validate response', async ({ app, page }) => {
-    test.slow(process.platform === 'darwin' || process.platform === 'win32', 'Slow app start on these platforms');
+    slowOnDarwinAndWindows(test);
     const statusTag = page.locator('[data-testid="response-status-tag"]:visible');
     const responsePane = page.getByTestId('response-pane');
 

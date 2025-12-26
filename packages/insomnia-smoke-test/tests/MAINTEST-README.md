@@ -6,11 +6,15 @@ This document describes the custom "Main workflow" Playwright test that lives un
 
 The test exercises a realistic end-to-end flow in Insomnia:
 
-- Create a new request collection.
-- Create a new HTTP request and make it active.
-- Configure request method, params, headers, and JSON body.
-- Set the request URL and send the request.
-- Validate status and response content.
+- Create a request collection and a new HTTP request.
+- Configure request method, query params, headers, and JSON body.
+- Set the request URL, send, and validate a successful response.
+- Validate a 400 error when required body fields are missing.
+- Recover from a 400 error by fixing the body and validating success.
+- Validate a connection error when the server is unavailable.
+- Send a basic-auth request from an imported fixture collection.
+- Import a collection, select a request, and validate its response.
+- Show a parse error when importing an invalid file.
 
 File:
 
@@ -53,7 +57,7 @@ npx playwright test -c packages/insomnia-smoke-test/playwright.config.ts --proje
 Or run via the dev test script with a filter:
 
 ```sh
-npm run test:dev -w insomnia-smoke-test -- tests/main-workflow/main.test.ts
+npm run test:dev -w packages/insomnia-smoke-test -- tests/main-workflow/main.test.ts
 ```
 
 ## Notes
@@ -78,6 +82,22 @@ On Windows, prefer running Playwright directly to avoid Linux-only helpers:
 ```sh
 npx playwright test -c packages/insomnia-smoke-test/playwright.config.ts --project "Main"
 ```
+
+## Design Considerations
+
+This workflow focuses on realistic user paths (create/configure/send, import from file, invalid import feedback, and common error states) while keeping selectors stable across UI changes. It favors UI-driven flows over API shortcuts to validate end-to-end behavior, but limits scope to a few representative requests to keep runtime reasonable.
+
+## Assumptions
+
+- The smoke-test server is available at the configured webServer URL and provides `/echo` and `/validate-request`.
+- The import modal supports file-based imports via the `import-file-input` control.
+- Environment editing is available in table mode via "Manage Environments".
+
+## Trade-offs
+
+- UI-driven steps are slower and more fragile than direct data seeding, but they better reflect user behavior.
+- Error assertions allow minor platform wording differences, trading strictness for cross-platform stability.
+- Import failure validation checks for the presence of error messaging, not the full error payload, to reduce flakiness.
 
 ## Troubleshooting
 

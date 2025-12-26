@@ -2,6 +2,10 @@ import { expect, type Page } from '@playwright/test';
 import { getFixturePath } from '../playwright/paths';
 import { getRequestPane, getUrlEditor, getVisibleCodeEditorTextbox, REQUEST_CONFIG } from './request-helpers';
 
+export function slowOnDarwinAndWindows(test: { slow: (condition: boolean, description?: string) => void }) {
+  test.slow(process.platform === 'darwin' || process.platform === 'win32', 'Slow app start on these platforms');
+}
+
 export async function createRequestCollection(page: Page) {
   const welcomeCreate = page.getByRole('button', { name: /create request collection/i }).first();
   try {
@@ -102,9 +106,11 @@ export async function setRequestBody(page: Page) {
 
 export async function setJsonBody(page: Page, body: string) {
   await page.getByRole('tab', { name: 'Body' }).click();
-  await page.getByRole('button', { name: 'Body' }).click();
+  await page.getByRole('button', { name: /change body type/i }).click();
   await page.getByRole('option', { name: 'JSON' }).click();
   const bodyEditor = getVisibleCodeEditorTextbox(page);
+  await bodyEditor.press('ControlOrMeta+A');
+  await bodyEditor.press('Backspace');
   await bodyEditor.fill(body);
 }
 
