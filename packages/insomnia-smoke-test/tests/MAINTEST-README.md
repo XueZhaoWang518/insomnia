@@ -9,6 +9,7 @@ The test exercises a realistic end-to-end flow in Insomnia:
 - Create a request collection and a new HTTP request.
 - Configure request method, query params, headers, and JSON body.
 - Set the request URL, send, and validate a successful response.
+- Resolve environment variables in request URLs.
 - Validate a 400 error when required body fields are missing.
 - Recover from a 400 error by fixing the body and validating success.
 - Validate a connection error when the server is unavailable.
@@ -75,6 +76,14 @@ After running Playwright, view the HTML report with:
 npx playwright show-report packages/insomnia-smoke-test/playwright-report
 ```
 
+## CI (GitHub)
+
+This test runs in GitHub Actions via `.github/workflows/test-main-workflow.yml`.
+
+- Triggers: `workflow_dispatch`, `merge_group`, `pull_request` (opened/synchronize), and pushes to `main-workflow-smoke`.
+- Job flow: checkout → Node setup → `npm ci` + `patch-package` → install Electron/libcurl bindings → `npm run app-build` → `npm run test:build -w packages/insomnia-smoke-test -- --project=Main`.
+- Artifacts: Playwright traces under `packages/insomnia-smoke-test/traces/` and HTML reports under `packages/insomnia-smoke-test/playwright-report`.
+
 ## Windows Notes
 
 On Windows, prefer running Playwright directly to avoid Linux-only helpers:
@@ -85,13 +94,14 @@ npx playwright test -c packages/insomnia-smoke-test/playwright.config.ts --proje
 
 ## Design Considerations
 
-This workflow focuses on realistic user paths (create/configure/send, import from file, invalid import feedback, and common error states) while keeping selectors stable across UI changes. It favors UI-driven flows over API shortcuts to validate end-to-end behavior, but limits scope to a few representative requests to keep runtime reasonable.
+These tests are end-to-end automation, which is at the top of the testing pyramid. Because E2E coverage is higher cost, detailed behaviors are left to lower-level tests (component, integration). The scenarios here prioritize user journeys across key flows (create/configure/send, imports, error recovery, environment resolution) while keeping selectors stable and scope limited to representative paths.
 
 ## Assumptions
 
 - The smoke-test server is available at the configured webServer URL and provides `/echo` and `/validate-request`.
 - The import modal supports file-based imports via the `import-file-input` control.
 - Environment editing is available in table mode via "Manage Environments".
+- Request URL templates resolve environment variables (e.g. `{{ base_url }}`) before sending.
 
 ## Trade-offs
 
