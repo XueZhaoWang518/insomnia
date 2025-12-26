@@ -7,6 +7,7 @@ import {
   assertMainWorkflowMethod,
   assertMainWorkflowParams,
   assertMainWorkflowUrl,
+  assertResponseOk,
   assertBadRequestError,
   assertMainWorkflowResponse,
   assertServerUnavailableError,
@@ -20,6 +21,7 @@ import {
   selectImportedRequest,
   scanCollectionFromFile,
   sendRequestAndAssertSuccess,
+  setEnvironmentVariables,
   slowOnDarwinAndWindows,
   setJsonBody,
   setPostMethod,
@@ -29,7 +31,6 @@ import {
   setRequestHeaders,
   sendRequest,
 } from '../../helpers/main-workflow-helpers';
-import { send } from 'process';
 
 test.describe('main workflow', () => {
   test('create -> configure -> send -> validate response', async ({ page }) => {
@@ -71,6 +72,40 @@ test.describe('main workflow', () => {
       await sendRequestAndAssertSuccess(page, async curentPage =>{
         await sendRequest(curentPage);
         await assertMainWorkflowResponse(curentPage);
+      });
+    });
+  });
+
+  test('resolves environment variables in request URL', async ({ page }) => {
+    slowOnDarwinAndWindows(test);
+    const baseUrl = test.info().config.webServer?.url ?? 'http://127.0.0.1:4010';
+
+    await test.step('Create a request collection', async () => {
+      await createRequestCollection(page);
+      await expect(page.getByRole('grid', { name: 'Request Collection' })).toBeVisible();
+    });
+
+    await test.step('Create a new HTTP request', async () => {
+      await createHttpRequest(page);
+      await selectActiveRequest(page);
+      await expect(getRequestPane(page).getByRole('button', { name: 'Send' })).toBeVisible();
+    });
+
+    await test.step('Set environment variable for base URL', async () => {
+      await setEnvironmentVariables(page, [{ key: REQUEST_CONFIG.env.baseUrlKey, value: baseUrl }]);
+    });
+
+    await test.step('Set request URL with template', async () => {
+      const requestUrl = `{{ ${REQUEST_CONFIG.env.baseUrlKey} }}/echo`;
+      await setRequestUrl(page, requestUrl);
+      await assertMainWorkflowUrl(page, requestUrl);
+    });
+
+    await test.step('Send request and validate response', async () => {
+      await sendRequestAndAssertSuccess(page, async currentPage => {
+        await sendRequest(currentPage);
+        await assertResponseOk(currentPage);
+        await expect(currentPage.getByTestId('response-pane')).toContainText('"method": "GET"');
       });
     });
   });
@@ -117,8 +152,7 @@ test.describe('main workflow', () => {
       await setJsonBody(page, `{"name": "wxz-main", "token": "${REQUEST_CONFIG.body.token}"}`);
       await sendRequestAndAssertSuccess(page, async currentPage => {
         await sendRequest(currentPage);
-        const statusTag = currentPage.locator('[data-testid="response-status-tag"]:visible');
-        await expect(statusTag).toContainText('200 OK');
+        await assertResponseOk(currentPage);
       });
     });
   });
@@ -139,8 +173,7 @@ test.describe('main workflow', () => {
 
     await test.step('Send request and validate response', async () => {
       await sendRequestAndAssertSuccess(page, async currentPage => {
-        const statusTag = currentPage.locator('[data-testid="response-status-tag"]:visible');
-        await expect(statusTag).toContainText('200 OK');
+        await assertResponseOk(currentPage);
         await expect(currentPage.getByTestId('response-pane')).toContainText('basic auth received');
       });
     });
@@ -173,7 +206,6 @@ test.describe('main workflow', () => {
 
   test('import -> select -> send -> validate response', async ({ app, page }) => {
     slowOnDarwinAndWindows(test);
-    const statusTag = page.locator('[data-testid="response-status-tag"]:visible');
     const responsePane = page.getByTestId('response-pane');
 
     await test.step('Import request collection from file', async () => {
@@ -186,7 +218,7 @@ test.describe('main workflow', () => {
 
     await test.step('Send request and validate response', async () => {
       await sendRequestAndAssertSuccess(page, async currentPage => {
-        await expect(statusTag).toContainText('200 OK');
+        await assertResponseOk(currentPage);
         await expect(responsePane).toContainText('"id": "1"');
       });
     });

@@ -26,6 +26,10 @@ export function getResponsePane(page: Page) {
   return page.getByTestId('response-pane');
 }
 
+export function getResponseStatusTag(page: Page) {
+  return page.locator('[data-testid="response-status-tag"]:visible');
+}
+
 export function getUrlEditor(page: Page) {
   return getRequestPane(page).locator('header').locator('[data-testid="OneLineEditor"]').first();
 }

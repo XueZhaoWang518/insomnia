@@ -1,5 +1,12 @@
 import { expect, type Page } from '@playwright/test';
-import { getRequestPane, getResponsePane, getUrlEditor, getVisibleCodeEditorContainer, REQUEST_CONFIG } from './request-helpers';
+import {
+  getRequestPane,
+  getResponsePane,
+  getResponseStatusTag,
+  getUrlEditor,
+  getVisibleCodeEditorContainer,
+  REQUEST_CONFIG,
+} from './request-helpers';
 
 export async function assertMainWorkflowParams(page: Page) {
   const paramsList = getRequestPane(page).getByRole('listbox', { name: 'Key-value pairs' });
@@ -30,7 +37,7 @@ export async function assertMainWorkflowUrl(page: Page, requestUrl: string) {
 }
 
 export async function assertMainWorkflowResponse(page: Page) {
-  const statusTag = page.locator('[data-testid="response-status-tag"]:visible');
+  const statusTag = getResponseStatusTag(page);
   await expect(statusTag).toContainText('200 OK');
 
   const responsePane = getResponsePane(page);
@@ -43,7 +50,7 @@ export async function assertMainWorkflowResponse(page: Page) {
 }
 
 export async function assertBadRequestError(page: Page, message: string) {
-  const statusTag = page.locator('[data-testid="response-status-tag"]:visible');
+  const statusTag = getResponseStatusTag(page);
   await expect(statusTag).toContainText('400');
 
   const responsePane = getResponsePane(page);
@@ -53,4 +60,9 @@ export async function assertBadRequestError(page: Page, message: string) {
 export async function assertServerUnavailableError(page: Page) {
   const responsePane = getResponsePane(page);
   await expect(responsePane).toContainText(/Couldn't connect to server|URL using bad\/illegal format or missing URL/i);
+}
+
+export async function assertResponseOk(page: Page) {
+  const statusTag = getResponseStatusTag(page);
+  await expect(statusTag).toContainText('200 OK');
 }
